@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  pdfmaster:
+    build: .
+    container_name: pdfmaster
+    restart: always
+    ports:
+      - "5700:5700"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./output:/app/output
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5700
+    # 资源限制 (可选，按需调整)
+    deploy:
+      resources:
+        limits:
+          memory: 2G

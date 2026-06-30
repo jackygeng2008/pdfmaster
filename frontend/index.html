@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDFMaster - 全能PDF处理软件</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<!-- ====== 顶部菜单栏 ====== -->
+<header class="menubar">
+  <div class="menu-left">
+    <span class="logo">📄 <b>PDFMaster</b></span>
+    <span class="version">v1.0</span>
+  </div>
+  <nav class="menu-center">
+    <button class="menu-btn" data-tab="home">🏠 首页</button>
+    <button class="menu-btn" data-tab="view">👁 查看</button>
+    <button class="menu-btn" data-tab="edit">✏️ 编辑</button>
+    <button class="menu-btn" data-tab="convert">🔄 转换</button>
+    <button class="menu-btn" data-tab="tools">🔧 工具</button>
+    <button class="menu-btn" data-tab="security">🔒 安全</button>
+    <button class="menu-btn" data-tab="print">🖨 打印</button>
+    <button class="menu-btn" data-tab="invoice">🧾 发票</button>
+  </nav>
+  <div class="menu-right">
+    <span class="status" id="statusBar">✅ 就绪</span>
+  </div>
+</header>
+
+<!-- ====== 主体区域 ====== -->
+<div class="main-container">
+  <!-- 左侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidetab active" data-panel="thumbnails">📑 缩略图</button>
+      <button class="sidetab" data-panel="toc">📋 目录</button>
+      <button class="sidetab" data-panel="search">🔍 搜索</button>
+      <button class="sidetab" data-panel="annotations">💬 注释</button>
+    </div>
+    <div class="sidebar-content" id="sidebarContent">
+      <div id="panel-thumbnails" class="panel active"></div>
+      <div id="panel-toc" class="panel"></div>
+      <div id="panel-search" class="panel">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="输入搜索关键词...">
+          <button onclick="searchPDF()">搜索</button>
+        </div>
+        <div id="searchResults"></div>
+      </div>
+      <div id="panel-annotations" class="panel">
+        <div id="annotationList"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 中央工作区 -->
+  <main class="workspace" id="workspace">
+    <!-- 首页面板 -->
+    <div id="panel-home" class="content-panel active">
+      <div class="home-hero">
+        <div class="hero-icon">📄</div>
+        <h1>PDFMaster</h1>
+        <p>全能PDF处理软件 — 查看·编辑·转换·压缩·合并·OCR·水印·签名·加密·打印</p>
+        <div class="hero-actions">
+          <button class="btn-primary large" onclick="openPDF()">📂 打开PDF文件</button>
+          <button class="btn-secondary" onclick="createPDF()">➕ 新建PDF</button>
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <p>或拖拽PDF文件到此处</p>
+        </div>
+      </div>
+
+      <!-- 功能卡片 -->
+      <div class="feature-grid">
+        <div class="feature-card" onclick="switchTab('view')">
+          <span class="fc-icon">👁</span>
+          <h3>PDF查看</h3>
+          <p>多模式阅读、缩放、目录导航、全文搜索</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('edit')">
+          <span class="fc-icon">✏️</span>
+          <h3>PDF编辑</h3>
+          <p>像Word一样编辑文本、插入图片和链接</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('convert')">
+          <span class="fc-icon">🔄</span>
+          <h3>格式转换</h3>
+          <p>PDF转Word/Excel/PPT/图片/HTML/TXT</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('tools')">
+          <span class="fc-icon">🔧</span>
+          <h3>合并拆分</h3>
+          <p>PDF合并、拆分、提取、页面管理</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('tools')">
+          <span class="fc-icon">🗜</span>
+          <h3>PDF压缩</h3>
+          <p>三级压缩、批量处理、保持质量</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('tools')">
+          <span class="fc-icon">🔍</span>
+          <h3>OCR识别</h3>
+          <p>扫描件文字识别、图片PDF转可搜索</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('security')">
+          <span class="fc-icon">🔒</span>
+          <h3>安全保护</h3>
+          <p>加密解密、权限控制、水印添加</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('security')">
+          <span class="fc-icon">✍️</span>
+          <h3>电子签名</h3>
+          <p>手写/文字/图片三种签名方式</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('print')">
+          <span class="fc-icon">🖨</span>
+          <h3>打印排版</h3>
+          <p>多页排版、2合1/4合1、裁剪线</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('edit')">
+          <span class="fc-icon">📝</span>
+          <h3>注释标注</h3>
+          <p>高亮、下划线、批注、图形标注</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('invoice')">
+          <span class="fc-icon">🧾</span>
+          <h3>发票管理</h3>
+          <p>发票打印、合并、整理、统计</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 查看面板 -->
+    <div id="panel-view" class="content-panel">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button onclick="openPDF()" title="打开">📂</button>
+          <button onclick="savePDF()" title="保存">💾</button>
+        </div>
+        <div class="tool-group">
+          <button onclick="zoomIn()" title="放大">🔍+</button>
+          <span id="zoomLevel">100%</span>
+          <button onclick="zoomOut()" title="缩小">🔍-</button>
+          <button onclick="fitWidth()" title="适应宽度">↔</button>
+          <button onclick="fitPage()" title="适应页面">↕</button>
+        </div>
+        <div class="tool-group">
+          <button onclick="prevPage()" title="上一页">◀</button>
+          <input type="number" id="pageInput" value="1" style="width:50px;text-align:center" onchange="goToPage()">
+          <span>/ <span id="totalPages">0</span></span>
+          <button onclick="nextPage()" title="下一页">▶</button>
+        </div>
+        <div class="tool-group">
+          <select id="viewMode" onchange="changeViewMode()">
+            <option value="single">单页</option>
+            <option value="continuous">连续</option>
+            <option value="facing">对开</option>
+          </select>
+        </div>
+        <div class="tool-group">
+          <button onclick="toggleSidebar()" title="侧边栏">📑</button>
+        </div>
+      </div>
+      <div class="viewer-container" id="viewerContainer">
+        <div class="viewer-pages" id="viewer"></div>
+      </div>
+    </div>
+
+    <!-- 编辑面板 -->
+    <div id="panel-edit" class="content-panel">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button onclick="startEditText()" class="tool-active">📝 编辑文字</button>
+          <button onclick="addTextBox()">➕ 添加文字</button>
+          <button onclick="insertImage()">🖼 插入图片</button>
+          <button onclick="addLink()">🔗 添加链接</button>
+        </div>
+        <div class="tool-group">
+          <select id="editFontSize">
+            <option value="12">12pt</option><option value="14">14pt</option>
+            <option value="16">16pt</option><option value="18">18pt</option>
+            <option value="24">24pt</option>
+          </select>
+          <input type="color" id="editFontColor" value="#000000">
+          <select id="editFontName">
+            <option value="china-s">宋体</option><option value="china-ss">黑体</option>
+            <option value="helv">Helvetica</option><option value="tiro">Times</option>
+          </select>
+        </div>
+        <div class="tool-group">
+          <button onclick="applyEdit()">✅ 应用编辑</button>
+          <button onclick="downloadEdited()">💾 下载</button>
+        </div>
+      </div>
+      <div class="viewer-container">
+        <div class="viewer-pages" id="editViewer"></div>
+      </div>
+    </div>
+
+    <!-- 转换面板 -->
+    <div id="panel-convert" class="content-panel">
+      <div class="convert-container">
+
+        <!-- Section 1: PDF → 其他格式 -->
+        <h2>🔄 PDF 转换为其他格式</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:14px">打开PDF文件后点击需要转换的格式</p>
+        <div class="convert-grid">
+          <div class="convert-card" onclick="convertPDF('word')">
+            <span>📝</span><h3>PDF → Word</h3><p>.docx 可编辑文档</p>
+          </div>
+          <div class="convert-card" onclick="convertPDF('excel')">
+            <span>📊</span><h3>PDF → Excel</h3><p>.xlsx 提取表格</p>
+          </div>
+          <div class="convert-card" onclick="convertPDF('ppt')">
+            <span>📽</span><h3>PDF → PPT</h3><p>.pptx 演示文稿</p>
+          </div>
+          <div class="convert-card" onclick="convertPDF('image')">
+            <span>🖼</span><h3>PDF → 图片</h3><p>每页转为PNG图片</p>
+          </div>
+          <div class="convert-card" onclick="convertPDF('html')">
+            <span>🌐</span><h3>PDF → HTML</h3><p>网页格式浏览</p>
+          </div>
+          <div class="convert-card" onclick="convertPDF('txt')">
+            <span>📃</span><h3>PDF → TXT</h3><p>提取全文纯文本</p>
+          </div>
+        </div>
+        <input type="file" id="convertFileInput" accept=".pdf" style="display:none" onchange="handleConvertFile(event)">
+
+        <!-- 分隔线 -->
+        <hr style="margin:28px 0;border:none;border-top:1px solid var(--border)">
+
+        <!-- Section 2: 其他格式 → PDF -->
+        <h2>📥 各种格式转换为 PDF</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:14px">选择任意格式的文件，自动转换为PDF</p>
+
+        <div class="to-pdf-grid">
+
+          <!-- Word→PDF -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">📝</div>
+            <div class="to-pdf-info">
+              <h3>Word → PDF</h3>
+              <p>.docx / .doc</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('word')">选择转换</button>
+            <input type="file" id="toPdfInput_word" accept=".docx,.doc" style="display:none"
+              onchange="doConvertToPDF(event,'word')">
+          </div>
+
+          <!-- Excel→PDF -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">📊</div>
+            <div class="to-pdf-info">
+              <h3>Excel → PDF</h3>
+              <p>.xlsx / .xls</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('excel')">选择转换</button>
+            <input type="file" id="toPdfInput_excel" accept=".xlsx,.xls" style="display:none"
+              onchange="doConvertToPDF(event,'excel')">
+          </div>
+
+          <!-- PPT→PDF -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">📽</div>
+            <div class="to-pdf-info">
+              <h3>PPT → PDF</h3>
+              <p>.pptx / .ppt</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('ppt')">选择转换</button>
+            <input type="file" id="toPdfInput_ppt" accept=".pptx,.ppt" style="display:none"
+              onchange="doConvertToPDF(event,'ppt')">
+          </div>
+
+          <!-- 图片→PDF (多选) -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">🖼</div>
+            <div class="to-pdf-info">
+              <h3>图片 → PDF</h3>
+              <p>JPG/PNG/BMP 多选</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('image')">选择转换</button>
+            <input type="file" id="toPdfInput_image" accept="image/*" multiple style="display:none"
+              onchange="doConvertToPDF(event,'image')">
+          </div>
+
+          <!-- HTML→PDF -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">🌐</div>
+            <div class="to-pdf-info">
+              <h3>HTML → PDF</h3>
+              <p>.html / .htm</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('html')">选择转换</button>
+            <input type="file" id="toPdfInput_html" accept=".html,.htm" style="display:none"
+              onchange="doConvertToPDF(event,'html')">
+          </div>
+
+          <!-- Markdown→PDF -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">📋</div>
+            <div class="to-pdf-info">
+              <h3>Markdown → PDF</h3>
+              <p>.md / .markdown</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('markdown')">选择转换</button>
+            <input type="file" id="toPdfInput_markdown" accept=".md,.markdown,.mdown" style="display:none"
+              onchange="doConvertToPDF(event,'markdown')">
+          </div>
+
+          <!-- TXT→PDF -->
+          <div class="to-pdf-card">
+            <div class="to-pdf-icon">📃</div>
+            <div class="to-pdf-info">
+              <h3>文本 → PDF</h3>
+              <p>.txt 纯文本</p>
+            </div>
+            <button class="btn-convert" onclick="pickAndConvertToPDF('txt')">选择转换</button>
+            <input type="file" id="toPdfInput_txt" accept=".txt,.csv,.log" style="display:none"
+              onchange="doConvertToPDF(event,'txt')">
+          </div>
+
+          <!-- 任意文件→PDF（自动识别） -->
+          <div class="to-pdf-card to-pdf-card-auto">
+            <div class="to-pdf-icon">🔮</div>
+            <div class="to-pdf-info">
+              <h3>自动识别转PDF</h3>
+              <p>任意支持格式</p>
+            </div>
+            <button class="btn-convert btn-auto" onclick="pickAndConvertToPDF('auto')">选择转换</button>
+            <input type="file" id="toPdfInput_auto"
+              accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.html,.htm,.md,.txt,.png,.jpg,.jpeg,.bmp,.gif,.webp"
+              style="display:none" onchange="doConvertToPDF(event,'auto')">
+          </div>
+
+        </div>
+
+        <!-- 进度反馈区 -->
+        <div id="convertProgress" class="convert-progress" style="display:none">
+          <span id="convertProgressText">正在转换...</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 工具面板 -->
+    <div id="panel-tools" class="content-panel">
+      <div class="tools-tabs">
+        <button class="tooltab active" data-subtab="merge">合并</button>
+        <button class="tooltab" data-subtab="split">拆分</button>
+        <button class="tooltab" data-subtab="compress">压缩</button>
+        <button class="tooltab" data-subtab="ocr">OCR</button>
+        <button class="tooltab" data-subtab="pages">页面管理</button>
+      </div>
+
+      <!-- 合并 -->
+      <div id="subtab-merge" class="subtool active">
+        <h2>📎 PDF合并</h2>
+        <div class="drop-zone" id="mergeDropZone">
+          <p>拖拽多个PDF文件到此处（至少2个）</p>
+        </div>
+        <div id="mergeFileList" class="file-list"></div>
+        <input type="file" id="mergeFileInput" multiple accept=".pdf" style="display:none" onchange="handleMergeFiles(event)">
+        <button class="btn-primary" onclick="document.getElementById('mergeFileInput').click()">➕ 添加文件</button>
+        <button class="btn-action" onclick="mergePDFs()">🔗 开始合并</button>
+      </div>
+
+      <!-- 拆分 -->
+      <div id="subtab-split" class="subtool">
+        <h2>✂️ PDF拆分</h2>
+        <div class="form-group">
+          <label>拆分方式：</label>
+          <select id="splitMode">
+            <option value="all">每页单独拆分</option>
+            <option value="every">每N页一组</option>
+            <option value="range">按页码范围</option>
+          </select>
+        </div>
+        <div id="splitEveryOption" class="form-group" style="display:none">
+          <label>每 <input type="number" id="splitEveryN" value="2" min="1" style="width:60px"> 页一组</label>
+        </div>
+        <div id="splitRangeOption" class="form-group" style="display:none">
+          <label>页码范围（如 1-3,5-7）：<input type="text" id="splitRanges" placeholder="1-3,5-7"></label>
+        </div>
+        <button class="btn-action" onclick="splitPDF()">✂️ 开始拆分</button>
+      </div>
+
+      <!-- 压缩 -->
+      <div id="subtab-compress" class="subtool">
+        <h2>🗜 PDF压缩</h2>
+        <div class="form-group">
+          <label>压缩级别：</label>
+          <select id="compressLevel">
+            <option value="light">轻微压缩（高质量）</option>
+            <option value="medium" selected>中等压缩（推荐）</option>
+            <option value="heavy">大幅压缩（最小体积）</option>
+          </select>
+        </div>
+        <div id="compressResult" class="result-box"></div>
+        <button class="btn-action" onclick="compressPDF()">🗜 开始压缩</button>
+      </div>
+
+      <!-- OCR -->
+      <div id="subtab-ocr" class="subtool">
+        <h2>🔍 OCR文字识别</h2>
+        <div class="form-group">
+          <label>识别语言：</label>
+          <select id="ocrLang">
+            <option value="chi_sim+eng">中文+英文</option>
+            <option value="chi_sim">中文</option>
+            <option value="eng">英文</option>
+          </select>
+        </div>
+        <button class="btn-action" onclick="runOCR()">🔍 开始识别</button>
+        <button class="btn-action" onclick="runOCRSave()">💾 生成可搜索PDF</button>
+        <div id="ocrResult" class="result-box"></div>
+      </div>
+
+      <!-- 页面管理 -->
+      <div id="subtab-pages" class="subtool">
+        <h2>📑 页面管理</h2>
+        <div class="form-group">
+          <label>删除页面（逗号分隔）：<input type="text" id="deletePages" placeholder="1,3,5"></label>
+          <button class="btn-action" onclick="deletePages()">🗑 删除</button>
+        </div>
+        <div class="form-group">
+          <label>旋转页面（逗号分隔，留空=全部）：<input type="text" id="rotatePagesInput" placeholder="留空则为全部页面"></label>
+          <label>旋转角度：</label>
+          <select id="rotateAngle">
+            <option value="90">顺时针90°</option>
+            <option value="180">180°</option>
+            <option value="270">逆时针90°</option>
+          </select>
+          <button class="btn-action" onclick="rotatePages()">↻ 旋转</button>
+        </div>
+        <div class="form-group">
+          <label>提取页面（逗号分隔）：<input type="text" id="extractPages" placeholder="2,4,6"></label>
+          <button class="btn-action" onclick="extractPages()">📤 提取</button>
+        </div>
+        <div class="form-group">
+          <label>重新排序（逗号分隔）：<input type="text" id="reorderPages" placeholder="3,1,2,4"></label>
+          <button class="btn-action" onclick="reorderPages()">🔀 排序</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 安全面板 -->
+    <div id="panel-security" class="content-panel">
+      <div class="security-tabs">
+        <button class="sectab active" data-sectab="encrypt">🔒 加密</button>
+        <button class="sectab" data-sectab="decrypt">🔓 解密</button>
+        <button class="sectab" data-sectab="permissions">🛡 权限</button>
+        <button class="sectab" data-sectab="watermark">💧 水印</button>
+        <button class="sectab" data-sectab="signature">✍️ 签名</button>
+      </div>
+
+      <!-- 加密 -->
+      <div id="sectab-encrypt" class="subsectab active">
+        <h2>🔒 PDF加密</h2>
+        <div class="form-group">
+          <label>设置密码：<input type="password" id="encPassword" placeholder="输入密码"></label>
+        </div>
+        <div class="form-group">
+          <label>确认密码：<input type="password" id="encPassword2" placeholder="再次输入密码"></label>
+        </div>
+        <button class="btn-action" onclick="encryptPDF()">🔒 加密</button>
+      </div>
+
+      <!-- 解密 -->
+      <div id="sectab-decrypt" class="subsectab">
+        <h2>🔓 PDF解密</h2>
+        <div class="form-group">
+          <label>输入密码：<input type="password" id="decPassword" placeholder="输入PDF密码"></label>
+        </div>
+        <button class="btn-action" onclick="decryptPDF()">🔓 解密</button>
+      </div>
+
+      <!-- 权限 -->
+      <div id="sectab-permissions" class="subsectab">
+        <h2>🛡 权限控制</h2>
+        <div class="form-group">
+          <label>所有者密码：<input type="password" id="permPassword" placeholder="设置所有者密码"></label>
+        </div>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="permPrint" checked> 允许打印</label>
+          <label><input type="checkbox" id="permModify"> 允许修改</label>
+          <label><input type="checkbox" id="permCopy" checked> 允许复制</label>
+          <label><input type="checkbox" id="permAnnotate"> 允许注释</label>
+        </div>
+        <button class="btn-action" onclick="setPermissions()">🛡 应用权限</button>
+      </div>
+
+      <!-- 水印 -->
+      <div id="sectab-watermark" class="subsectab">
+        <h2>💧 添加水印</h2>
+        <div class="form-group">
+          <label>水印类型：</label>
+          <select id="wmType">
+            <option value="text">文字水印</option>
+            <option value="image">图片水印</option>
+          </select>
+        </div>
+        <div id="wmTextOptions">
+          <div class="form-group">
+            <label>水印文字：<input type="text" id="wmText" value="保密"></label>
+          </div>
+          <div class="form-group">
+            <label>字体大小：<input type="number" id="wmFontSize" value="60" min="10" max="200"></label>
+          </div>
+          <div class="form-group">
+            <label>透明度：<input type="range" id="wmOpacity" value="0.3" min="0.05" max="1" step="0.05"></label>
+            <span id="wmOpacityVal">30%</span>
+          </div>
+          <div class="form-group">
+            <label>旋转角度：<input type="number" id="wmRotation" value="45" min="0" max="360"></label>
+          </div>
+        </div>
+        <div id="wmImageOptions" style="display:none">
+          <div class="form-group">
+            <label>水印图片：<input type="file" id="wmImageFile" accept="image/*"></label>
+          </div>
+        </div>
+        <button class="btn-action" onclick="addWatermark()">💧 添加水印</button>
+      </div>
+
+      <!-- 签名 -->
+      <div id="sectab-signature" class="subsectab">
+        <h2>✍️ 电子签名</h2>
+        <div class="form-group">
+          <label>签名方式：</label>
+          <select id="sigType">
+            <option value="draw">手写签名</option>
+            <option value="text">文字签名</option>
+            <option value="image">图片签名</option>
+          </select>
+        </div>
+        <div id="sigDrawArea" class="signature-area">
+          <canvas id="sigCanvas" width="300" height="120"></canvas>
+          <div>
+            <button onclick="clearSignature()">🗑 清除</button>
+          </div>
+        </div>
+        <div id="sigTextInput" style="display:none" class="form-group">
+          <label>签名文字：<input type="text" id="sigText" placeholder="输入签名"></label>
+        </div>
+        <div id="sigImageInput" style="display:none" class="form-group">
+          <label>签名图片：<input type="file" id="sigImageFile" accept="image/*"></label>
+        </div>
+        <div class="form-group">
+          <label>页码：<input type="number" id="sigPage" value="1" min="1"></label>
+        </div>
+        <button class="btn-action" onclick="addSignature()">✍️ 添加签名</button>
+      </div>
+    </div>
+
+    <!-- 打印面板 -->
+    <div id="panel-print" class="content-panel">
+      <div class="print-container">
+        <h2>🖨 PDF打印排版</h2>
+        <p style="color:#666;margin-bottom:16px;font-size:13px">选择多个PDF文件，合并排版到A4纸上打印（保持原图比例）</p>
+        <input type="file" id="printFileInput" accept=".pdf" multiple style="display:none" onchange="handlePrintFile(event)">
+        <div class="print-file-actions">
+          <button class="btn-primary" onclick="pickPrintFile()">📂 选择PDF文件（可多选）</button>
+          <button class="btn-secondary" onclick="clearPrintFiles()" id="btnClearPrint" style="display:none">🗑 清空选择</button>
+        </div>
+        <div id="printFileList" class="print-file-list"></div>
+        <div class="print-options">
+          <div class="print-card" onclick="printLayout(2)">
+            <span>📄📄</span>
+            <h3>2合1打印</h3>
+            <p>A4纸每页2张（含裁剪线）</p>
+          </div>
+          <div class="print-card" onclick="printLayout(4)">
+            <span>📑</span>
+            <h3>4合1打印</h3>
+            <p>A4纸每页4张</p>
+          </div>
+          <div class="print-card" onclick="printLayout(6)">
+            <span>🗂</span>
+            <h3>6合1打印</h3>
+            <p>A4纸每页6张（2x3）</p>
+          </div>
+          <div class="print-card" onclick="printLayout(9)">
+            <span>🪟</span>
+            <h3>9合1打印</h3>
+            <p>A4纸每页9张（3x3）</p>
+          </div>
+          <div class="print-card" onclick="directPrint()">
+            <span>🖨</span>
+            <h3>直接打印</h3>
+            <p>合并后弹出打印对话框</p>
+          </div>
+        </div>
+
+        <!-- 分隔线 -->
+        <hr style="margin: 28px 0; border: none; border-top: 1px solid var(--border);">
+
+        <h2>🖼 图片合并与多合一打印</h2>
+        <p style="color:#666;margin-bottom:16px;font-size:13px">选择多张图片（JPG/PNG/BMP等），合并排版到A4纸上打印，保持原图比例</p>
+        <input type="file" id="printImageInput" accept="image/*" multiple style="display:none" onchange="handlePrintImage(event)">
+        <div class="print-file-actions">
+          <button class="btn-primary btn-accent" onclick="pickPrintImage()">🖼 选择图片（可多选）</button>
+          <button class="btn-secondary" onclick="clearPrintImages()" id="btnClearPrintImages" style="display:none">🗑 清空图片</button>
+        </div>
+        <div id="printImageList" class="print-image-grid"></div>
+        <div class="print-options">
+          <div class="print-card" onclick="imageLayout(1)">
+            <span>🖼</span>
+            <h3>每页1张</h3>
+            <p>一页一张原图，自适应A4</p>
+          </div>
+          <div class="print-card" onclick="imageLayout(2)">
+            <span>🖼🖼</span>
+            <h3>2合1打印</h3>
+            <p>A4纸每页2张图片</p>
+          </div>
+          <div class="print-card" onclick="imageLayout(4)">
+            <span>🪟</span>
+            <h3>4合1打印</h3>
+            <p>A4纸每页4张图片</p>
+          </div>
+          <div class="print-card" onclick="imageLayout(6)">
+            <span>🗂</span>
+            <h3>6合1打印</h3>
+            <p>A4纸每页6张图片（2x3）</p>
+          </div>
+          <div class="print-card" onclick="imageLayout(9)">
+            <span>🔲</span>
+            <h3>9合1打印</h3>
+            <p>A4纸每页9张图片（3x3）</p>
+          </div>
+          <div class="print-card" onclick="imageDirectPrint()">
+            <span>🖨</span>
+            <h3>直接打印</h3>
+            <p>图片合并后弹打印对话框</p>
+          </div>
+        </div>
+
+        <!-- 隐藏iframe用于直接打印 -->
+        <iframe id="printIframe" style="display:none" title="打印预览"></iframe>
+      </div>
+    </div>
+
+    <!-- 发票面板 -->
+    <div id="panel-invoice" class="content-panel">
+      <div class="invoice-container">
+        <!-- 共享文件选择区域 -->
+        <div class="invoice-shared-files">
+          <input type="file" id="invoiceFileInput" accept=".pdf" multiple style="display:none" onchange="handleInvoiceFile(event)">
+          <div class="invoice-shared-header">
+            <button class="btn-primary" onclick="pickInvoiceFile()">📂 选择发票PDF（可多选）</button>
+            <button class="btn-secondary" onclick="clearInvoiceFiles()" id="btnClearInvoice" style="display:none">🗑 清空选择</button>
+            <span class="invoice-file-count" id="invoiceFileCount"></span>
+          </div>
+          <div id="invoiceFileList" class="print-file-list"></div>
+        </div>
+
+        <div class="invoice-tabs">
+          <button class="invtab active" data-invtab="invoice-print">🖨 发票打印</button>
+          <button class="invtab" data-invtab="invoice-merge">📎 发票合并</button>
+          <button class="invtab" data-invtab="invoice-organize">📋 发票整理</button>
+          <button class="invtab" data-invtab="invoice-stats">📊 发票统计</button>
+        </div>
+
+        <!-- 发票打印 -->
+        <div id="invtab-invoice-print" class="subinvtab active">
+          <h2>🖨 发票打印</h2>
+          <p style="color:#666;margin-bottom:16px;font-size:13px">选择多张发票PDF，排版到A4纸上打印，保持原图比例</p>
+          <div class="print-options">
+            <div class="print-card" onclick="invoicePrint(1)">
+              <span>📄</span>
+              <h3>每页1张</h3>
+              <p>单张发票居中A4打印</p>
+            </div>
+            <div class="print-card" onclick="invoicePrint(2)">
+              <span>📄📄</span>
+              <h3>2合1打印</h3>
+              <p>A4纸每页2张（含裁剪线）</p>
+            </div>
+            <div class="print-card" onclick="invoicePrint(4)">
+              <span>📑</span>
+              <h3>4合1打印</h3>
+              <p>A4纸每页4张</p>
+            </div>
+            <div class="print-card" onclick="invoiceDirectPrint()">
+              <span>🖨</span>
+              <h3>直接打印</h3>
+              <p>合并后弹出打印对话框</p>
+            </div>
+          </div>
+          <iframe id="invoicePrintIframe" style="display:none" title="发票打印预览"></iframe>
+        </div>
+
+        <!-- 发票合并 -->
+        <div id="invtab-invoice-merge" class="subinvtab">
+          <h2>📎 发票合并</h2>
+          <p style="color:#666;margin-bottom:16px;font-size:13px">将多张发票PDF合并为一个文件，方便归档管理</p>
+          <button class="btn-action" onclick="invoiceMerge()">📎 开始合并</button>
+        </div>
+
+        <!-- 发票整理 -->
+        <div id="invtab-invoice-organize" class="subinvtab">
+          <h2>📋 发票整理</h2>
+          <p style="color:#666;margin-bottom:16px;font-size:13px">将多张发票排版到A4纸上，含裁剪线，方便裁剪归档保存</p>
+          <div class="print-options">
+            <div class="print-card" onclick="invoiceOrganize(2)">
+              <span>📄📄</span>
+              <h3>每页2张</h3>
+              <p>上下布局，含裁剪线（推荐）</p>
+            </div>
+            <div class="print-card" onclick="invoiceOrganize(4)">
+              <span>📑</span>
+              <h3>每页4张</h3>
+              <p>2x2网格，含裁剪线</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 发票统计 -->
+        <div id="invtab-invoice-stats" class="subinvtab">
+          <h2>📊 发票统计</h2>
+          <p style="color:#666;margin-bottom:16px;font-size:13px">上传多张发票PDF，自动识别金额、税额、日期等信息并汇总统计</p>
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <button class="btn-action" onclick="invoiceStatistics()">📊 开始统计</button>
+            <button class="btn-secondary" onclick="invoiceExportExcel()">📥 导出Excel</button>
+          </div>
+          <div id="invoiceStatsResult" class="invoice-stats-result" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 隐藏的文件输入 -->
+<input type="file" id="mainFileInput" accept=".pdf" style="display:none" onchange="handleFileOpen(event)">
+<input type="file" id="editFileInput" accept=".pdf" style="display:none" onchange="handleEditFile(event)">
+<input type="file" id="imageInsertInput" accept="image/*" style="display:none" onchange="handleImageInsert(event)">
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

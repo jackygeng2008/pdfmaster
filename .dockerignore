@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+uploads/*
+output/*
+.git/
+*.bat
+*.vbs
+watchdog.py
+start_server.bat
+安装依赖.bat
+停止PDFMaster.bat
+启动.bat
