@@ -39,7 +39,7 @@ if docker compose ps | grep -q "running"; then
     echo ""
     echo "=========================================="
     echo "  ✅ 部署成功！"
-    echo "  访问地址: http://$(curl -s ifconfig.me):5700"
+    echo "  访问地址: http://$(curl -s ifconfig.me):8000"
     echo "=========================================="
     echo ""
     echo "常用命令:"
