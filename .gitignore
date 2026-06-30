@@ -18,3 +18,4 @@ start_server.bat
 打包部署.bat
 启动Cloudflare隧道.bat
 pdfmaster-deploy.tar.gz
+backend/test_real_inv1.pdf

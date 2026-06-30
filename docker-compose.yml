@@ -6,15 +6,19 @@ services:
     container_name: pdfmaster
     restart: always
     ports:
-      - "5700:5700"
+      - "8000:8000"
     volumes:
       - ./uploads:/app/uploads
       - ./output:/app/output
     environment:
       - HOST=0.0.0.0
-      - PORT=5700
-    # 资源限制 (可选，按需调整)
+      - PORT=8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 512M
