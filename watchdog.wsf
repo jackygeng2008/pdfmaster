@@ -1,0 +1,39 @@
+<package>
+  <job id="PDFMasterWatchdog">
+    <script language="VBScript">
+      Option Explicit
+
+      Dim python, appPath, port, shell, http
+      python = "C:\Users\Administrator\.workbuddy\binaries\python\versions\3.11.9\python.exe"
+      appPath = "D:\桌面\迅读\PDFMaster\backend\app.py"
+      port = 5700
+
+      Set shell = CreateObject("WScript.Shell")
+      Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
+
+      Function IsAlive()
+          On Error Resume Next
+          http.Open "GET", "http://127.0.0.1:" & port & "/", False
+          http.SetTimeouts 3000, 3000, 3000, 3000
+          http.Send
+          If Err.Number = 0 And http.Status = 200 Then
+              IsAlive = True
+          Else
+              IsAlive = False
+          End If
+          On Error GoTo 0
+      End Function
+
+      ' 主循环：每60秒检查一次，挂了就拉起
+      Do While True
+          If Not IsAlive() Then
+              ' 启动服务器（隐藏窗口）
+              shell.Run """" & python & """ """ & appPath & """", 0, False
+              ' 等待8秒让它启动
+              WScript.Sleep 8000
+          End If
+          WScript.Sleep 60000
+      Loop
+    </script>
+  </job>
+</package>

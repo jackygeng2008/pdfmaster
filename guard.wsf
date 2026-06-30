@@ -1,0 +1,14 @@
+<package>
+  <job id="PDFMasterGuard">
+    <script language="VBScript">
+      Option Explicit
+      Dim shell, python, appPath, cmdLine
+      python = "C:\Users\Administrator\.workbuddy\binaries\python\versions\3.11.9\python.exe"
+      appPath = "D:\桌面\迅读\PDFMaster\backend\app.py"
+      cmdLine = """" & python & """ """ & appPath & """"
+      Set shell = CreateObject("WScript.Shell")
+      ' 0 = 隐藏窗口, False = 不等待
+      shell.Run cmdLine, 0, False
+    </script>
+  </job>
+</package>
