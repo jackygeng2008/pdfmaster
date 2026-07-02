@@ -14,6 +14,8 @@ const state = {
   viewMode: "single",
   editMode: false,
   mergeFiles: [],
+  mixedFiles: [],
+  printMixedFiles: [],
 };
 
 // ========== 初始化 ==========
@@ -27,6 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initSplitOptions();
   initWatermarkOptions();
   initSigTypeOptions();
+  initMixedDragDrop();
+  initPrintMixedDragDrop();
 });
 
 // ========== 导航 ==========
@@ -513,6 +517,251 @@ async function mergePDFs() {
       showToast("合并完成", "success");
     }
   } catch (err) { showToast("合并失败", "error"); }
+}
+
+// ========== 混合排版（图片+PDF） ==========
+const _IMG_EXTS = new Set(['jpg','jpeg','png','webp','bmp','gif','tiff','tif']);
+
+function handleMixedFiles(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(f => {
+    if (!state.mixedFiles.find(x => x.name === f.name && x.size === f.size)) {
+      const ext = f.name.split('.').pop().toLowerCase();
+      state.mixedFiles.push({ file: f, type: _IMG_EXTS.has(ext) ? 'img' : 'pdf' });
+    }
+  });
+  renderMixedList();
+  e.target.value = "";
+}
+
+function removeMixedFile(idx) {
+  state.mixedFiles.splice(idx, 1);
+  renderMixedList();
+}
+
+function clearMixedFiles() {
+  state.mixedFiles = [];
+  renderMixedList();
+}
+
+function renderMixedList() {
+  const container = document.getElementById("mixedFileList");
+  if (state.mixedFiles.length === 0) {
+    container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无文件，请添加图片或PDF</div>';
+    return;
+  }
+  container.innerHTML = state.mixedFiles.map((item, i) => {
+    const icon = item.type === 'img' ? '🖼' : '📄';
+    const tagCls = item.type === 'img' ? 'img' : 'pdf';
+    const tagText = item.type === 'img' ? '图片' : 'PDF';
+    return `
+      <div class="mixed-file-row" draggable="true" data-idx="${i}"
+           ondragstart="mixDragStart(event)" ondragover="mixDragOver(event)"
+           ondragleave="mixDragLeave(event)" ondrop="mixDrop(event)" ondragend="mixDragEnd(event)">
+        <span class="drag-handle">⋮⋮</span>
+        <span class="order-num">${i + 1}</span>
+        <span class="file-icon">${icon}</span>
+        <span class="file-name">${item.file.name}</span>
+        <span class="file-type-tag ${tagCls}">${tagText}</span>
+        <span class="remove" onclick="removeMixedFile(${i})">✕</span>
+      </div>`;
+  }).join("");
+}
+
+let _mixDragIdx = null;
+function mixDragStart(e) {
+  _mixDragIdx = parseInt(e.currentTarget.dataset.idx);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', _mixDragIdx);
+}
+function mixDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function mixDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function mixDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const toIdx = parseInt(e.currentTarget.dataset.idx);
+  if (_mixDragIdx === toIdx) return;
+  const item = state.mixedFiles.splice(_mixDragIdx, 1)[0];
+  state.mixedFiles.splice(toIdx, 0, item);
+  renderMixedList();
+}
+function mixDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.mixed-file-row').forEach(r => r.classList.remove('drag-over'));
+}
+
+async function mixedMerge() {
+  if (state.mixedFiles.length === 0) { showToast("请添加至少1个文件", "error"); return; }
+
+  const fd = new FormData();
+  state.mixedFiles.forEach(item => fd.append("files", item.file));
+  fd.append("page_size", document.getElementById("mixedPageSize").value);
+  fd.append("fit_mode", document.getElementById("mixedFitMode").value);
+  const nupVal = document.getElementById("mixedNup").value;
+  fd.append("n_up", nupVal);
+  if (nupVal === "invoice") fd.append("layout", "invoice");
+
+  showToast("正在排版合并...", "info");
+  try {
+    const res = await fetch(`${API}/pdf/mixed-merge`, { method: "POST", body: fd });
+    if (res.ok) {
+      const blob = await res.blob();
+      downloadBlob(blob, "mixed_merged.pdf");
+      showToast("排版合并完成", "success");
+    } else {
+      const data = await res.json();
+      showToast(data.msg || "排版失败", "error");
+    }
+  } catch (err) { showToast("排版失败", "error"); }
+}
+
+// 拖拽上传支持
+function initMixedDragDrop() {
+  const dz = document.getElementById("mixedDropZone");
+  if (!dz) return;
+  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag-over"); });
+  dz.addEventListener("dragleave", () => dz.classList.remove("drag-over"));
+  dz.addEventListener("drop", e => {
+    e.preventDefault();
+    dz.classList.remove("drag-over");
+    const files = Array.from(e.dataTransfer.files).filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      return _IMG_EXTS.has(ext) || ext === 'pdf';
+    });
+    if (files.length === 0) { showToast("请拖入图片或PDF文件", "error"); return; }
+    files.forEach(f => {
+      if (!state.mixedFiles.find(x => x.file.name === f.name && x.file.size === f.size)) {
+        const ext = f.name.split('.').pop().toLowerCase();
+        state.mixedFiles.push({ file: f, type: _IMG_EXTS.has(ext) ? 'img' : 'pdf' });
+      }
+    });
+    renderMixedList();
+  });
+}
+
+// ========== 打印面板 - 混合排版（图片+PDF） ==========
+function handlePrintMixedFiles(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(f => {
+    if (!state.printMixedFiles.find(x => x.name === f.name && x.size === f.size)) {
+      const ext = f.name.split('.').pop().toLowerCase();
+      state.printMixedFiles.push({ file: f, type: _IMG_EXTS.has(ext) ? 'img' : 'pdf' });
+    }
+  });
+  renderPrintMixedList();
+  e.target.value = "";
+}
+
+function removePrintMixedFile(idx) {
+  state.printMixedFiles.splice(idx, 1);
+  renderPrintMixedList();
+}
+
+function clearPrintMixedFiles() {
+  state.printMixedFiles = [];
+  renderPrintMixedList();
+}
+
+function renderPrintMixedList() {
+  const container = document.getElementById("printMixedFileList");
+  if (!container) return;
+  if (state.printMixedFiles.length === 0) {
+    container.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">暂无文件，请添加图片或PDF</div>';
+    return;
+  }
+  container.innerHTML = state.printMixedFiles.map((item, i) => {
+    const icon = item.type === 'img' ? '🖼' : '📄';
+    const tagCls = item.type === 'img' ? 'img' : 'pdf';
+    const tagText = item.type === 'img' ? '图片' : 'PDF';
+    return `
+      <div class="mixed-file-row" draggable="true" data-idx="${i}"
+           ondragstart="printMixDragStart(event)" ondragover="printMixDragOver(event)"
+           ondragleave="printMixDragLeave(event)" ondrop="printMixDrop(event)" ondragend="printMixDragEnd(event)">
+        <span class="drag-handle">⋮⋮</span>
+        <span class="order-num">${i + 1}</span>
+        <span class="file-icon">${icon}</span>
+        <span class="file-name">${item.file.name}</span>
+        <span class="file-type-tag ${tagCls}">${tagText}</span>
+        <span class="remove" onclick="removePrintMixedFile(${i})">✕</span>
+      </div>`;
+  }).join("");
+}
+
+let _printMixDragIdx = null;
+function printMixDragStart(e) {
+  _printMixDragIdx = parseInt(e.currentTarget.dataset.idx);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function printMixDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function printMixDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function printMixDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const toIdx = parseInt(e.currentTarget.dataset.idx);
+  if (_printMixDragIdx === toIdx) return;
+  const item = state.printMixedFiles.splice(_printMixDragIdx, 1)[0];
+  state.printMixedFiles.splice(toIdx, 0, item);
+  renderPrintMixedList();
+}
+function printMixDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('#printMixedFileList .mixed-file-row').forEach(r => r.classList.remove('drag-over'));
+}
+
+async function printMixedMerge() {
+  if (state.printMixedFiles.length === 0) { showToast("请添加至少1个文件", "error"); return; }
+
+  const fd = new FormData();
+  state.printMixedFiles.forEach(item => fd.append("files", item.file));
+  fd.append("page_size", document.getElementById("printMixedPageSize").value);
+  fd.append("fit_mode", document.getElementById("printMixedFitMode").value);
+  const printNupVal = document.getElementById("printMixedNup").value;
+  fd.append("n_up", printNupVal);
+  if (printNupVal === "invoice") fd.append("layout", "invoice");
+
+  showToast("正在排版合并...", "info");
+  try {
+    const res = await fetch(`${API}/pdf/mixed-merge`, { method: "POST", body: fd });
+    if (res.ok) {
+      const blob = await res.blob();
+      downloadBlob(blob, "print_mixed.pdf");
+      showToast("排版合并完成", "success");
+    } else {
+      const data = await res.json();
+      showToast(data.msg || "排版失败", "error");
+    }
+  } catch (err) { showToast("排版失败", "error"); }
+}
+
+function initPrintMixedDragDrop() {
+  const dz = document.getElementById("printMixedDropZone");
+  if (!dz) return;
+  dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag-over"); });
+  dz.addEventListener("dragleave", () => dz.classList.remove("drag-over"));
+  dz.addEventListener("drop", e => {
+    e.preventDefault();
+    dz.classList.remove("drag-over");
+    const files = Array.from(e.dataTransfer.files).filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      return _IMG_EXTS.has(ext) || ext === 'pdf';
+    });
+    if (files.length === 0) { showToast("请拖入图片或PDF文件", "error"); return; }
+    files.forEach(f => {
+      if (!state.printMixedFiles.find(x => x.file.name === f.name && x.file.size === f.size)) {
+        const ext = f.name.split('.').pop().toLowerCase();
+        state.printMixedFiles.push({ file: f, type: _IMG_EXTS.has(ext) ? 'img' : 'pdf' });
+      }
+    });
+    renderPrintMixedList();
+  });
 }
 
 async function splitPDF() {

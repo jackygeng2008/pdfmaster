@@ -1080,6 +1080,233 @@ def pdf_merge():
         return json_err(str(e))
 
 
+# 图片格式扩展名
+_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.tiff', '.tif'}
+
+# 页面尺寸预设 (pt)
+_PAGE_SIZES = {
+    'a4': (595, 842),
+    'a3': (842, 1191),
+    'letter': (612, 792),
+    'b5': (499, 708),
+}
+
+
+@app.route("/api/pdf/mixed-merge", methods=["POST"])
+def pdf_mixed_merge():
+    """图片+PDF混合排版：按添加顺序，图片每张一页，PDF原样保留，支持N合1拼版"""
+    files = request.files.getlist("files")
+    page_size = request.form.get("page_size", "a4")
+    fit_mode = request.form.get("fit_mode", "fill")  # fill=居中填充, stretch=拉伸满页
+    n_up_raw = request.form.get("n_up", "1")
+    layout = request.form.get("layout", "")  # invoice=发票上图片下
+
+    if len(files) < 1:
+        return json_err("请至少上传1个文件")
+
+    pw, ph = _PAGE_SIZES.get(page_size, (595, 842))
+
+    try:
+        # Step 1: 构建中间文档（所有图片和PDF页面展平为顺序列表）
+        # 同时记录每页来源类型: invoice(PDF) / image(图片)
+        doc_intermediate = fitz.open()
+        page_sources = []  # 'invoice' or 'image'
+
+        for f in files:
+            fpath, _ = save_upload(f)
+            ext = Path(fpath).suffix.lower()
+
+            if ext in _IMAGE_EXTS:
+                img = Image.open(fpath)
+                if img.mode in ('RGBA', 'P', 'LA'):
+                    img = img.convert('RGB')
+
+                page = doc_intermediate.new_page(width=pw, height=ph)
+
+                if fit_mode == 'stretch':
+                    rect = fitz.Rect(0, 0, pw, ph)
+                else:
+                    iw, ih = img.size
+                    scale = min(pw / iw, ph / ih)
+                    nw, nh = iw * scale, ih * scale
+                    x0 = (pw - nw) / 2
+                    y0 = (ph - nh) / 2
+                    rect = fitz.Rect(x0, y0, x0 + nw, y0 + nh)
+
+                buf = io.BytesIO()
+                img.save(buf, format='PNG')
+                page.insert_image(rect, stream=buf.getvalue())
+                page_sources.append('image')
+
+            elif ext == '.pdf':
+                doc_src = fitz.open(fpath)
+                start = doc_intermediate.page_count
+                doc_intermediate.insert_pdf(doc_src)
+                end = doc_intermediate.page_count
+                doc_src.close()
+                for _ in range(end - start):
+                    page_sources.append('invoice')
+            else:
+                return json_err(f"不支持的文件格式: {ext}，仅支持图片和PDF")
+
+        total_pages = doc_intermediate.page_count
+
+        # Step 2a: 发票专属布局 — 全部排到一张A4，发票上半，图片下半
+        if layout == "invoice" and total_pages > 0:
+            doc_out = fitz.open()
+            page = doc_out.new_page(width=pw, height=ph)
+
+            invoice_indices = [i for i, s in enumerate(page_sources) if s == 'invoice']
+            image_indices = [i for i, s in enumerate(page_sources) if s == 'image']
+
+            ni = len(invoice_indices)
+            nimg = len(image_indices)
+
+            gap = 6
+            line_y = ph / 2
+
+            if ni > 0 and nimg > 0:
+                # 发票上半 + 图片下半
+                top_h = line_y - gap / 2
+                bot_y = line_y + gap / 2
+                bot_h = ph - bot_y
+
+                # 上半: 发票均分列宽
+                col_w_top = pw / ni
+                for idx, src_idx in enumerate(invoice_indices):
+                    rect = fitz.Rect(idx * col_w_top, 0, (idx + 1) * col_w_top, top_h)
+                    _draw_page_scaled(page, doc_intermediate[src_idx], rect, margin=4)
+
+                _draw_dash_line(page, (0, line_y), (pw, line_y))
+
+                # 下半: 图片均分列宽
+                col_w_bot = pw / nimg
+                for idx, src_idx in enumerate(image_indices):
+                    rect = fitz.Rect(idx * col_w_bot, bot_y, (idx + 1) * col_w_bot, ph)
+                    _draw_page_scaled(page, doc_intermediate[src_idx], rect, margin=4)
+
+            elif ni > 0:
+                # 只有发票: 铺满整页
+                col_w = pw / ni
+                for idx, src_idx in enumerate(invoice_indices):
+                    rect = fitz.Rect(idx * col_w, 0, (idx + 1) * col_w, ph)
+                    _draw_page_scaled(page, doc_intermediate[src_idx], rect, margin=6)
+
+            elif nimg > 0:
+                # 只有图片: 铺满整页
+                col_w = pw / nimg
+                for idx, src_idx in enumerate(image_indices):
+                    rect = fitz.Rect(idx * col_w, 0, (idx + 1) * col_w, ph)
+                    _draw_page_scaled(page, doc_intermediate[src_idx], rect, margin=6)
+
+            doc_intermediate.close()
+            out_path = _output_path(gen_id())
+            doc_out.save(out_path)
+            doc_out.close()
+            return send_file(out_path, as_attachment=True,
+                           download_name="mixed_invoice_layout.pdf")
+
+        # Step 2b: N合1 拼版
+        n_up = int(n_up_raw)
+        if n_up > 1 and total_pages > 0:
+            doc_out = fitz.open()
+
+            if n_up == 2:
+                # 上下布局 + 裁剪线
+                gap = 6
+                line_y = ph / 2
+                top_h = line_y - gap / 2
+                for i in range(0, total_pages, 2):
+                    page = doc_out.new_page(width=pw, height=ph)
+                    _draw_page_scaled(page, doc_intermediate[i],
+                        fitz.Rect(0, 0, pw, top_h), margin=8)
+                    _draw_dash_line(page, (0, line_y), (pw, line_y))
+                    if i + 1 < total_pages:
+                        _draw_page_scaled(page, doc_intermediate[i + 1],
+                            fitz.Rect(0, line_y + gap / 2, pw, ph), margin=8)
+
+            elif n_up == 3:
+                # 三行布局：上1/3 + 中1/3 + 下1/3
+                gap = 4
+                third_h = ph / 3
+                for i in range(0, total_pages, 3):
+                    page = doc_out.new_page(width=pw, height=ph)
+                    for j in range(3):
+                        y_top = j * third_h + (gap / 2 if j > 0 else 0)
+                        y_bot = (j + 1) * third_h - (gap / 2 if j < 2 else 0)
+                        if i + j < total_pages:
+                            _draw_page_scaled(page, doc_intermediate[i + j],
+                                fitz.Rect(0, y_top, pw, y_bot), margin=6)
+
+            elif n_up == 4:
+                half_w, half_h = pw / 2, ph / 2
+                m = 4
+                positions = [
+                    fitz.Rect(m, m, half_w - m, half_h - m),
+                    fitz.Rect(half_w + m, m, pw - m, half_h - m),
+                    fitz.Rect(m, half_h + m, half_w - m, ph - m),
+                    fitz.Rect(half_w + m, half_h + m, pw - m, ph - m),
+                ]
+                for i in range(0, total_pages, 4):
+                    page = doc_out.new_page(width=pw, height=ph)
+                    for j, rect in enumerate(positions):
+                        if i + j < total_pages:
+                            _draw_page_scaled(page, doc_intermediate[i + j], rect, margin=0)
+
+            elif n_up == 6:
+                half_w = pw / 2
+                third_h = ph / 3
+                m = 3
+                positions = []
+                for row in range(3):
+                    for col in range(2):
+                        positions.append(fitz.Rect(
+                            col * half_w + m, row * third_h + m,
+                            (col + 1) * half_w - m, (row + 1) * third_h - m))
+                for i in range(0, total_pages, 6):
+                    page = doc_out.new_page(width=pw, height=ph)
+                    for j, rect in enumerate(positions):
+                        if i + j < total_pages:
+                            _draw_page_scaled(page, doc_intermediate[i + j], rect, margin=0)
+
+            elif n_up == 9:
+                third_w, third_h = pw / 3, ph / 3
+                m = 2
+                positions = []
+                for row in range(3):
+                    for col in range(3):
+                        positions.append(fitz.Rect(
+                            col * third_w + m, row * third_h + m,
+                            (col + 1) * third_w - m, (row + 1) * third_h - m))
+                for i in range(0, total_pages, 9):
+                    page = doc_out.new_page(width=pw, height=ph)
+                    for j, rect in enumerate(positions):
+                        if i + j < total_pages:
+                            _draw_page_scaled(page, doc_intermediate[i + j], rect, margin=0)
+
+            else:
+                doc_intermediate.close()
+                return json_err("n_up 仅支持 1/2/3/4/6/9")
+
+            doc_intermediate.close()
+            out_path = _output_path(gen_id())
+            doc_out.save(out_path)
+            doc_out.close()
+            nup_label = {2: "2up", 3: "3up", 4: "4up", 6: "6up", 9: "9up"}.get(n_up, f"{n_up}up")
+            return send_file(out_path, as_attachment=True,
+                           download_name=f"mixed_{nup_label}.pdf")
+        else:
+            # n_up == 1: 直接返回展平后的文档
+            out_path = _output_path(gen_id())
+            doc_intermediate.save(out_path)
+            doc_intermediate.close()
+            return send_file(out_path, as_attachment=True,
+                           download_name="mixed_merged.pdf")
+
+    except Exception as e:
+        return json_err(str(e))
+
+
 @app.route("/api/pdf/split", methods=["POST"])
 def pdf_split():
     """拆分PDF"""

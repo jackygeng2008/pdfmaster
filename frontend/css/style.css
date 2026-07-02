@@ -369,6 +369,7 @@ body {
 }
 .subtool.active, .subsectab.active { display: block; }
 .subtool h2, .subsectab h2 { margin-bottom: 20px; }
+.sub-desc { color: var(--text-light); font-size: 13px; margin: -12px 0 20px 0; }
 
 .form-group {
   margin-bottom: 16px;
@@ -502,6 +503,45 @@ body {
 }
 .print-image-thumb:hover .remove { display: block; }
 .print-image-thumb:hover { border-color: var(--accent); }
+
+/* ========== 混合排版 ========== */
+.mixed-file-list {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mixed-file-row {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid var(--border);
+  padding: 8px 12px; border-radius: 8px;
+  cursor: grab; transition: box-shadow 0.15s;
+}
+.mixed-file-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.mixed-file-row.dragging { opacity: 0.4; }
+.mixed-file-row.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,144,226,0.2); }
+.mixed-file-row .drag-handle { color: #bbb; font-size: 16px; cursor: grab; user-select: none; }
+.mixed-file-row .file-icon { font-size: 22px; }
+.mixed-file-row .file-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixed-file-row .file-type-tag {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+}
+.mixed-file-row .file-type-tag.img { background: #e8f5e9; color: #2e7d32; }
+.mixed-file-row .file-type-tag.pdf { background: #fce4ec; color: #c62828; }
+.mixed-file-row .remove { cursor: pointer; color: #999; font-size: 18px; line-height: 1; }
+.mixed-file-row .remove:hover { color: #e74c3c; }
+.mixed-file-row .order-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; flex-shrink: 0;
+}
+.mixed-options {
+  display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+  margin: 16px 0;
+}
+.mixed-options .form-group { margin: 0; }
+.mixed-actions { display: flex; gap: 10px; margin-top: 10px; }
 
 /* ========== Toast ========== */
 .toast {
