@@ -11,7 +11,7 @@
 <header class="menubar">
   <div class="menu-left">
     <span class="logo">📄 <b>PDFMaster</b></span>
-    <span class="version">v2.0</span>
+    <span class="version">v2.0.1</span>
   </div>
   <nav class="menu-center">
     <button class="menu-btn" data-tab="home">🏠 首页</button>
@@ -59,7 +59,6 @@
     <!-- 首页面板 -->
     <div id="panel-home" class="content-panel active">
       <div class="home-hero">
-        <div class="hero-icon">📄</div>
         <h1>PDFMaster</h1>
         <p>全能PDF处理软件 — 查看·编辑·转换·压缩·合并·OCR·水印·签名·加密·打印</p>
         <div class="hero-actions">
@@ -73,6 +72,16 @@
 
       <!-- 功能卡片 -->
       <div class="feature-grid">
+        <div class="feature-card" onclick="switchToMixed()">
+          <span class="fc-icon">🖼+📄</span>
+          <h3>混合排版</h3>
+          <p>图片+PDF混合排版、发票+图片一页打印</p>
+        </div>
+        <div class="feature-card" onclick="switchTab('invoice')">
+          <span class="fc-icon">🧾</span>
+          <h3>发票管理</h3>
+          <p>发票打印、合并、整理、统计</p>
+        </div>
         <div class="feature-card" onclick="switchTab('view')">
           <span class="fc-icon">👁</span>
           <h3>PDF查看</h3>
@@ -122,16 +131,6 @@
           <span class="fc-icon">📝</span>
           <h3>注释标注</h3>
           <p>高亮、下划线、批注、图形标注</p>
-        </div>
-        <div class="feature-card" onclick="switchTab('invoice')">
-          <span class="fc-icon">🧾</span>
-          <h3>发票管理</h3>
-          <p>发票打印、合并、整理、统计</p>
-        </div>
-        <div class="feature-card" onclick="switchToMixed()">
-          <span class="fc-icon">🖼+📄</span>
-          <h3>混合排版</h3>
-          <p>图片+PDF混合排版、发票+图片一页打印</p>
         </div>
       </div>
     </div>

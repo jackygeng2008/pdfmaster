@@ -3417,7 +3417,7 @@ if __name__ == "__main__":
     PORT = int(os.environ.get("PORT", 5700))
 
     print("=" * 60)
-    print("  PDFMaster v2.0 - 全能PDF处理软件")
+    print("  PDFMaster v2.0.1 - 全能PDF处理软件")
     print("  功能：查看 | 编辑 | 注释 | 转换 | 压缩 | 合并拆分")
     print("        OCR | 水印 | 签名 | 加密 | 打印 | 页面管理 | 发票")
     print("=" * 60)

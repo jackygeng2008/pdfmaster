@@ -1,5 +1,5 @@
 /**
- * PDFMaster v2.0 - 全能PDF处理软件 前端逻辑
+ * PDFMaster v2.0.1 - 全能PDF处理软件 前端逻辑
  */
 const API = "/api";
 
