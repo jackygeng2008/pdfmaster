@@ -50,6 +50,16 @@ function switchTab(tab) {
   document.getElementById(`panel-${tab}`)?.classList.add("active");
 }
 
+// 从首页跳转到混合排版子Tab
+function switchToMixed() {
+  switchTab('tools');
+  // 激活混合排版子Tab
+  document.querySelectorAll(".tooltab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".subtool").forEach(p => p.classList.remove("active"));
+  document.querySelector('.tooltab[data-subtab="mixed"]').classList.add("active");
+  document.getElementById("subtab-mixed").classList.add("active");
+}
+
 function switchSidePanel(panel) {
   document.querySelectorAll(".sidetab").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));

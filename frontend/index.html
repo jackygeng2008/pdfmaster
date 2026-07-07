@@ -128,6 +128,11 @@
           <h3>发票管理</h3>
           <p>发票打印、合并、整理、统计</p>
         </div>
+        <div class="feature-card" onclick="switchToMixed()">
+          <span class="fc-icon">🖼+📄</span>
+          <h3>混合排版</h3>
+          <p>图片+PDF混合排版、发票+图片一页打印</p>
+        </div>
       </div>
     </div>
 
@@ -346,16 +351,16 @@
     <!-- 工具面板 -->
     <div id="panel-tools" class="content-panel">
       <div class="tools-tabs">
-        <button class="tooltab active" data-subtab="merge">合并</button>
+        <button class="tooltab" data-subtab="merge">合并</button>
         <button class="tooltab" data-subtab="split">拆分</button>
         <button class="tooltab" data-subtab="compress">压缩</button>
         <button class="tooltab" data-subtab="ocr">OCR</button>
         <button class="tooltab" data-subtab="pages">页面管理</button>
-        <button class="tooltab" data-subtab="mixed">🖼+📄 混合排版</button>
+        <button class="tooltab active" data-subtab="mixed">🖼+📄 混合排版</button>
       </div>
 
       <!-- 合并 -->
-      <div id="subtab-merge" class="subtool active">
+      <div id="subtab-merge" class="subtool">
         <h2>📎 PDF合并</h2>
         <div class="drop-zone" id="mergeDropZone">
           <p>拖拽多个PDF文件到此处（至少2个）</p>
@@ -445,7 +450,7 @@
       </div>
 
       <!-- 混合排版：图片 + PDF -->
-      <div id="subtab-mixed" class="subtool">
+      <div id="subtab-mixed" class="subtool active">
         <h2>🖼 + 📄 图片与PDF混合排版</h2>
         <p class="sub-desc">同时选择图片和PDF文件，按列表顺序合并为一个PDF。</p>
 
@@ -611,6 +616,62 @@
     <!-- 打印面板 -->
     <div id="panel-print" class="content-panel">
       <div class="print-container">
+
+        <!-- 图片+PDF混合排版（优先显示） -->
+        <h2>🖼 + 📄 图片与PDF混合排版</h2>
+        <p style="color:#666;margin-bottom:16px;font-size:13px">同时选择图片(.jpg/.png/.webp等)和PDF文件，按列表顺序合并排版，支持多合一共纸打印</p>
+
+        <div class="drop-zone" id="printMixedDropZone">
+          <p>拖拽图片和PDF文件到此处</p>
+          <p style="font-size:11px;color:#999;margin-top:4px;">支持拖拽列表行调整顺序</p>
+        </div>
+
+        <div class="mixed-file-list" id="printMixedFileList">
+          <div style="color:#999;text-align:center;padding:20px;">暂无文件，请添加图片或PDF</div>
+        </div>
+
+        <input type="file" id="printMixedFileInput" multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif,.pdf" style="display:none" onchange="handlePrintMixedFiles(event)">
+
+        <div class="mixed-options">
+          <div class="form-group">
+            <label>版面排列：</label>
+            <select id="printMixedNup">
+              <option value="1">每页1张</option>
+              <option value="2">2合1（上下布局 + 裁剪线）</option>
+              <option value="3">3合1（三行布局）</option>
+              <option value="4">4合1（2×2网格）</option>
+              <option value="6">6合1（2×3网格）</option>
+              <option value="9">9合1（3×3网格）</option>
+              <option value="invoice" selected>发票+图片（全部一页·发票上半·图片下半）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>页面尺寸：</label>
+            <select id="printMixedPageSize">
+              <option value="a4" selected>A4</option>
+              <option value="a3">A3</option>
+              <option value="letter">Letter</option>
+              <option value="b5">B5</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>图片适配：</label>
+            <select id="printMixedFitMode">
+              <option value="fill" selected>居中填充</option>
+              <option value="stretch">拉伸满页</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mixed-actions">
+          <button class="btn-primary" onclick="document.getElementById('printMixedFileInput').click()">➕ 添加图片/PDF</button>
+          <button class="btn-secondary" onclick="clearPrintMixedFiles()">🗑 清空列表</button>
+          <button class="btn-action" onclick="printMixedMerge()">📦 开始排版合并</button>
+        </div>
+
+        <!-- 分隔线 -->
+        <hr style="margin: 28px 0; border: none; border-top: 1px solid var(--border);">
+
         <h2>🖨 PDF打印排版</h2>
         <p style="color:#666;margin-bottom:16px;font-size:13px">选择多个PDF文件，合并排版到A4纸上打印（保持原图比例）</p>
         <input type="file" id="printFileInput" accept=".pdf" multiple style="display:none" onchange="handlePrintFile(event)">
@@ -689,61 +750,6 @@
             <h3>直接打印</h3>
             <p>图片合并后弹打印对话框</p>
           </div>
-        </div>
-
-        <!-- 分隔线 -->
-        <hr style="margin: 28px 0; border: none; border-top: 1px solid var(--border);">
-
-        <!-- 图片+PDF混合排版 -->
-        <h2>🖼 + 📄 图片与PDF混合排版</h2>
-        <p style="color:#666;margin-bottom:16px;font-size:13px">同时选择图片(.jpg/.png/.webp等)和PDF文件，按列表顺序合并排版，支持多合一共纸打印</p>
-
-        <div class="drop-zone" id="printMixedDropZone">
-          <p>拖拽图片和PDF文件到此处</p>
-          <p style="font-size:11px;color:#999;margin-top:4px;">支持拖拽列表行调整顺序</p>
-        </div>
-
-        <div class="mixed-file-list" id="printMixedFileList">
-          <div style="color:#999;text-align:center;padding:20px;">暂无文件，请添加图片或PDF</div>
-        </div>
-
-        <input type="file" id="printMixedFileInput" multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff,.tif,.pdf" style="display:none" onchange="handlePrintMixedFiles(event)">
-
-        <div class="mixed-options">
-          <div class="form-group">
-            <label>版面排列：</label>
-            <select id="printMixedNup">
-              <option value="1">每页1张</option>
-              <option value="2">2合1（上下布局 + 裁剪线）</option>
-              <option value="3">3合1（三行布局）</option>
-              <option value="4">4合1（2×2网格）</option>
-              <option value="6">6合1（2×3网格）</option>
-              <option value="9">9合1（3×3网格）</option>
-              <option value="invoice" selected>发票+图片（全部一页·发票上半·图片下半）</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>页面尺寸：</label>
-            <select id="printMixedPageSize">
-              <option value="a4" selected>A4</option>
-              <option value="a3">A3</option>
-              <option value="letter">Letter</option>
-              <option value="b5">B5</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>图片适配：</label>
-            <select id="printMixedFitMode">
-              <option value="fill" selected>居中填充</option>
-              <option value="stretch">拉伸满页</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="mixed-actions">
-          <button class="btn-primary" onclick="document.getElementById('printMixedFileInput').click()">➕ 添加图片/PDF</button>
-          <button class="btn-secondary" onclick="clearPrintMixedFiles()">🗑 清空列表</button>
-          <button class="btn-action" onclick="printMixedMerge()">📦 开始排版合并</button>
         </div>
 
         <!-- 隐藏iframe用于直接打印 -->
